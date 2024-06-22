@@ -1,0 +1,43 @@
+version: '3.8'
+services:
+  config-service:
+    build: ./service-config
+    container_name: config-service
+    ports:
+      - "8088:8088"
+    networks:
+      - eureka-net
+    volumes:
+      - ./config:/config  # Mounting the local config directory to the container
+    environment:
+      - SPRING_PROFILES_ACTIVE=native
+  eureka-server:
+    build: ./service-registry
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - eureka-net
+    environment:
+      - EUREKA_INSTANCE_HOSTNAME=eureka-server
+      - SERVER_PORT=8761
+      - HOSTNAME=eureka-server  # Set the HOSTNAME environment variable
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+  service-department:
+    build: ./service-department
+    container_name: service-department
+    ports:
+      - "8081:8081"
+    networks:
+      - eureka-net
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+    restart: on-failure
+networks:
+  eureka-net:
+    driver: bridge
