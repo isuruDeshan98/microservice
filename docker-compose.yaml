@@ -34,5 +34,10 @@ services:
       - "8081:8081"
     depends_on:
       - eureka-server
-    command: ["./wait-for-eureka.sh", "eureka-server:8761", "--", "start-service-department"]
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://microservice_config-service:8088
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["sh /app/wait-for-it.sh eureka-server:8761 -- java -jar /app/service-department.jar"]
     restart: on-failure
+    
+    
